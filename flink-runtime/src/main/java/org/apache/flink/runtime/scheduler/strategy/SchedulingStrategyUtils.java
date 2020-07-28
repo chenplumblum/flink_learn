@@ -32,6 +32,7 @@ import java.util.stream.Collectors;
  */
 class SchedulingStrategyUtils {
 
+	//获取所有顶点的id
 	static Set<ExecutionVertexID> getAllVertexIdsFromTopology(final SchedulingTopology<?, ?> topology) {
 		return IterableUtils.toStream(topology.getVertices())
 			.map(SchedulingExecutionVertex::getId)

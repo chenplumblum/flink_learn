@@ -22,12 +22,15 @@ import java.io.Serializable;
 
 /**
  * A generic acknowledgement message.
+ * 通用确认消息模板
+ * ?为啥里面什么信息都没有呢
  */
 public class Acknowledge implements Serializable {
 
 	private static final long serialVersionUID = 7808628311617273755L;
 
 	/** The singleton instance */
+	// 单例模式
 	private static final Acknowledge INSTANCE = new Acknowledge();
 
 	/**

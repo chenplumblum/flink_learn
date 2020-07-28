@@ -682,9 +682,10 @@ public class Execution implements AccessExecution, Archiveable<ArchivedExecution
 
 	/**
 	 * Deploys the execution to the previously assigned resource.
-	 *
+	 *	把申请的slot通过rpc调用分配给对应的TaskManager执行
 	 * @throws JobException if the execution cannot be deployed to the assigned resource
 	 */
+	//把申请的slot通过rpc调用分配给对应的TaskManager执行
 	public void deploy() throws JobException {
 		assertRunningInJobMasterMainThread();
 
@@ -742,7 +743,6 @@ public class Execution implements AccessExecution, Archiveable<ArchivedExecution
 
 			// null taskRestore to let it be GC'ed
 			taskRestore = null;
-
 			final TaskManagerGateway taskManagerGateway = slot.getTaskManagerGateway();
 
 			final ComponentMainThreadExecutor jobMasterMainThreadExecutor =
@@ -750,6 +750,7 @@ public class Execution implements AccessExecution, Archiveable<ArchivedExecution
 
 			// We run the submission in the future executor so that the serialization of large TDDs does not block
 			// the main thread and sync back to the main thread once submission is completed.
+			//通过RPC调用吧executor提交给taskmanager执行
 			CompletableFuture.supplyAsync(() -> taskManagerGateway.submitTask(deployment, rpcTimeout), executor)
 				.thenCompose(Function.identity())
 				.whenCompleteAsync(

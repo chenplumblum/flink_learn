@@ -155,6 +155,7 @@ public class StreamExecutionEnvironment {
 	protected boolean isChainingEnabled = true;
 
 	/** The state backend used for storing k/v state and state snapshots. */
+	//k/v:键值对，用于保存：存储键值对及状态快照
 	private StateBackend defaultStateBackend;
 
 	/** The time characteristic used by the data streams. */
@@ -1616,13 +1617,13 @@ public class StreamExecutionEnvironment {
 	 */
 	public JobExecutionResult execute(String jobName) throws Exception {
 		Preconditions.checkNotNull(jobName, "Streaming Job name should not be null.");
-
+		//获取StreamGraph(程序拓扑结构），并开始执行
 		return execute(getStreamGraph(jobName));
 	}
 
 	/**
-	 * Triggers the program execution. The environment will execute all parts of
-	 * the program that have resulted in a "sink" operation. Sink operations are
+	 * triggers the program execution. the environment will execute all parts of
+	 * the program that have resulted in a "sink" operation. sink operations are
 	 * for example printing results or forwarding them to a message queue.
 	 *
 	 * @param streamGraph the stream graph representing the transformations
@@ -1631,11 +1632,12 @@ public class StreamExecutionEnvironment {
 	 */
 	@Internal
 	public JobExecutionResult execute(StreamGraph streamGraph) throws Exception {
+		//远程客户端
 		final JobClient jobClient = executeAsync(streamGraph);
 
 		try {
 			final JobExecutionResult jobExecutionResult;
-
+			//获取执行结果
 			if (configuration.getBoolean(DeploymentOptions.ATTACHED)) {
 				jobExecutionResult = jobClient.getJobExecutionResult(userClassloader).get();
 			} else {
@@ -1716,10 +1718,11 @@ public class StreamExecutionEnvironment {
 	 * @throws Exception which occurs during job execution.
 	 */
 	@Internal
+	//异步执行，打印"sink" operation，
 	public JobClient executeAsync(StreamGraph streamGraph) throws Exception {
 		checkNotNull(streamGraph, "StreamGraph cannot be null.");
 		checkNotNull(configuration.get(DeploymentOptions.TARGET), "No execution.target specified in your configuration file.");
-
+		//管道工厂类：实际上streamGraph抽象出PipeLine类
 		final PipelineExecutorFactory executorFactory =
 			executorServiceLoader.getExecutorFactory(configuration);
 
@@ -1728,6 +1731,7 @@ public class StreamExecutionEnvironment {
 			"Cannot find compatible factory for specified execution.target (=%s)",
 			configuration.get(DeploymentOptions.TARGET));
 
+		//异步执行
 		CompletableFuture<? extends JobClient> jobClientFuture = executorFactory
 			.getExecutor(configuration)
 			.execute(streamGraph, configuration);
@@ -1791,6 +1795,7 @@ public class StreamExecutionEnvironment {
 		if (transformations.size() <= 0) {
 			throw new IllegalStateException("No operators defined in streaming topology. Cannot execute.");
 		}
+
 		return new StreamGraphGenerator(transformations, config, checkpointCfg)
 			.setStateBackend(defaultStateBackend)
 			.setChaining(isChainingEnabled)

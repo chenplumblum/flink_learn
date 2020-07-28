@@ -265,10 +265,16 @@ public abstract class Dispatcher extends PermanentlyFencedRpcEndpoint<Dispatcher
 	//------------------------------------------------------
 
 	@Override
+	//执行任务
 	public CompletableFuture<Acknowledge> submitJob(JobGraph jobGraph, Time timeout) {
 		log.info("Received JobGraph submission {} ({}).", jobGraph.getJobID(), jobGraph.getName());
 
 		try {
+			/**
+			 * 1. 重复任务：抛出重复任务异常
+			 * 2. 已经分配资源：抛出部分节点 已经分配资源异常
+			 * 3. 正常执行任务
+			 */
 			if (isDuplicateJob(jobGraph.getJobID())) {
 				return FutureUtils.completedExceptionally(
 					new DuplicateJobSubmissionException(jobGraph.getJobID()));
@@ -303,6 +309,7 @@ public abstract class Dispatcher extends PermanentlyFencedRpcEndpoint<Dispatcher
 		return jobSchedulingStatus == RunningJobsRegistry.JobSchedulingStatus.DONE || jobManagerRunnerFutures.containsKey(jobId);
 	}
 
+	//查询是否分配资源
 	private boolean isPartialResourceConfigured(JobGraph jobGraph) {
 		boolean hasVerticesWithUnknownResource = false;
 		boolean hasVerticesWithConfiguredResource = false;
@@ -322,9 +329,15 @@ public abstract class Dispatcher extends PermanentlyFencedRpcEndpoint<Dispatcher
 		return false;
 	}
 
+	/**
+	 * 内部提交任务
+	 * @param jobGraph
+	 * @return
+	 */
 	private CompletableFuture<Acknowledge> internalSubmitJob(JobGraph jobGraph) {
 		log.info("Submitting job {} ({}).", jobGraph.getJobID(), jobGraph.getName());
 
+		//等待Job的执行结果重点方法：persistAndRunJob
 		final CompletableFuture<Acknowledge> persistAndRunFuture = waitForTerminatingJobManager(jobGraph.getJobID(), jobGraph, this::persistAndRunJob)
 			.thenApply(ignored -> Acknowledge.get());
 
@@ -342,6 +355,12 @@ public abstract class Dispatcher extends PermanentlyFencedRpcEndpoint<Dispatcher
 		}, getRpcService().getExecutor());
 	}
 
+	/**
+	 * 真正运行任务
+	 * @param jobGraph
+	 * @return
+	 * @throws Exception
+	 */
 	private CompletableFuture<Void> persistAndRunJob(JobGraph jobGraph) throws Exception {
 		jobGraphWriter.putJobGraph(jobGraph);
 
@@ -354,9 +373,14 @@ public abstract class Dispatcher extends PermanentlyFencedRpcEndpoint<Dispatcher
 		}));
 	}
 
+	/**
+	 * 运行job
+	 * @param jobGraph
+	 * @return
+	 */
 	private CompletableFuture<Void> runJob(JobGraph jobGraph) {
 		Preconditions.checkState(!jobManagerRunnerFutures.containsKey(jobGraph.getJobID()));
-
+		//创建JobManagerRunner
 		final CompletableFuture<JobManagerRunner> jobManagerRunnerFuture = createJobManagerRunner(jobGraph);
 
 		jobManagerRunnerFutures.put(jobGraph.getJobID(), jobManagerRunnerFuture);
@@ -390,6 +414,12 @@ public abstract class Dispatcher extends PermanentlyFencedRpcEndpoint<Dispatcher
 			rpcService.getExecutor());
 	}
 
+	/**
+	 * 开始执行任务：最终到达LeaderElectionService的start方法：EmbeddedLeaderElectionService
+	 * @param jobManagerRunner
+	 * @return
+	 * @throws Exception
+	 */
 	private JobManagerRunner startJobManagerRunner(JobManagerRunner jobManagerRunner) throws Exception {
 		final JobID jobId = jobManagerRunner.getJobID();
 

@@ -23,6 +23,7 @@ package org.apache.flink.runtime.jobgraph;
  */
 public enum ScheduleMode {
 	/** Schedule tasks lazily from the sources. Downstream tasks are started once their input data are ready */
+	//惰性启动：当资源准备充分后开始执行
 	LAZY_FROM_SOURCES(true),
 
 	/**
@@ -30,9 +31,11 @@ public enum ScheduleMode {
 	 * execution of jobs with fewer slots than requested. However, the user needs to make sure that the job
 	 * does not contain any pipelined shuffles (every pipelined region can be executed with a single slot).
 	 */
+	//惰性启动：用于批处理请求
 	LAZY_FROM_SOURCES_WITH_BATCH_SLOT_REQUEST(true),
 
 	/** Schedules all tasks immediately. */
+	// 执行任务
 	EAGER(false);
 
 	private final boolean allowLazyDeployment;

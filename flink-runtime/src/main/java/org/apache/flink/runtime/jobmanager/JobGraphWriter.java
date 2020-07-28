@@ -23,6 +23,7 @@ import org.apache.flink.runtime.jobgraph.JobGraph;
 
 /**
  * Allows to store and remove job graphs.
+ * 对图的添加和删除
  */
 public interface JobGraphWriter {
 	/**

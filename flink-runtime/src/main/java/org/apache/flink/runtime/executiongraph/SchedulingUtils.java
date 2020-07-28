@@ -51,7 +51,7 @@ public class SchedulingUtils {
 			ScheduleMode scheduleMode,
 			final Iterable<ExecutionVertex> vertices,
 			final ExecutionGraph executionGraph) {
-
+		//流程序必须所有提前将所有task都启动成功，批程序不需要提前启动所有task，上游task计算完后可以把结果落盘，下游task在启动运行。
 		switch (scheduleMode) {
 			case LAZY_FROM_SOURCES:
 			case LAZY_FROM_SOURCES_WITH_BATCH_SLOT_REQUEST:
@@ -67,7 +67,7 @@ public class SchedulingUtils {
 
 	/**
 	 * Schedule vertices lazy. That means only vertices satisfying its input constraint will be scheduled.
-	 *
+	 *	批处理
 	 * @param vertices Topologically sorted vertices to schedule.
 	 * @param executionGraph The graph the given vertices belong to.
 	 */
@@ -101,7 +101,7 @@ public class SchedulingUtils {
 
 	/**
 	 * Schedule vertices eagerly. That means all vertices will be scheduled at once.
-	 *
+	 *	流处理
 	 * @param vertices Topologically sorted vertices to schedule.
 	 * @param executionGraph The graph the given vertices belong to.
 	 */
@@ -126,6 +126,7 @@ public class SchedulingUtils {
 			computePriorAllocationIdsIfRequiredByScheduling(vertices, slotProviderStrategy.asSlotProvider()));
 
 		// allocate the slots (obtain all their futures)
+		// 分配slots
 		for (ExecutionVertex ev : vertices) {
 			// these calls are not blocking, they only return futures
 			CompletableFuture<Execution> allocationFuture = ev.getCurrentExecutionAttempt().allocateResourcesForExecution(
@@ -139,11 +140,12 @@ public class SchedulingUtils {
 		// this future is complete once all slot futures are complete.
 		// the future fails once one slot future fails.
 		final ConjunctFuture<Collection<Execution>> allAllocationsFuture = FutureUtils.combineAll(allAllocationFutures);
-
+		//slot都分配成功后
 		return allAllocationsFuture.thenAccept(
 			(Collection<Execution> executionsToDeploy) -> {
 				for (Execution execution : executionsToDeploy) {
 					try {
+						//执行
 						execution.deploy();
 					} catch (Throwable t) {
 						throw new CompletionException(

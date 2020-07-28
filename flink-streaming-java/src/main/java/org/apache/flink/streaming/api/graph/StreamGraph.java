@@ -79,15 +79,17 @@ public class StreamGraph implements Pipeline {
 	public static final String ITERATION_SOURCE_NAME_PREFIX = "IterationSource";
 
 	public static final String ITERATION_SINK_NAME_PREFIX = "IterationSink";
-
+	// 任务名称
 	private String jobName;
-
+	//运行配置
 	private final ExecutionConfig executionConfig;
+	//checkpoint配置
 	private final CheckpointConfig checkpointConfig;
+	//savepoint配置
 	private SavepointRestoreSettings savepointRestoreSettings = SavepointRestoreSettings.none();
-
+	//调度模式：决定使用什么方式启动任务
 	private ScheduleMode scheduleMode;
-
+	//是否是链式结构
 	private boolean chaining;
 
 	private Collection<Tuple2<String, DistributedCache.DistributedCacheEntry>> userArtifacts;
@@ -98,16 +100,21 @@ public class StreamGraph implements Pipeline {
 	 * If there are some stream edges that can not be chained and the shuffle mode of edge is not
 	 * specified, translate these edges into {@code BLOCKING} result partition type.
 	 */
+	//阻止链表间的串联
 	private boolean blockingConnectionsBetweenChains;
 
 	/** Flag to indicate whether to put all vertices into the same slot sharing group by default. */
+	//是否将所有顶点放入共享槽中
 	private boolean allVerticesInSameSlotSharingGroupByDefault = true;
-
+	//流节点
 	private Map<Integer, StreamNode> streamNodes;
+	//资源
 	private Set<Integer> sources;
 	private Set<Integer> sinks;
 	private Map<Integer, Tuple2<Integer, List<String>>> virtualSelectNodes;
+	//虚拟侧边节点
 	private Map<Integer, Tuple2<Integer, OutputTag>> virtualSideOutputNodes;
+	//虚拟分区节点
 	private Map<Integer, Tuple3<Integer, StreamPartitioner<?>, ShuffleMode>> virtualPartitionNodes;
 
 	protected Map<Integer, String> vertexIDtoBrokerID;

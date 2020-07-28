@@ -22,6 +22,7 @@ import org.apache.flink.annotation.PublicEvolving;
 
 /**
  * Possible states of a job once it has been accepted by the job manager.
+ * job状态
  */
 @PublicEvolving
 public enum JobStatus {

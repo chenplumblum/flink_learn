@@ -72,12 +72,14 @@ public final class PerJobMiniClusterFactory {
 
 	/**
 	 * Starts a {@link MiniCluster} and submits a job.
+	 * 重点方法：启动任务
 	 */
 	public CompletableFuture<? extends JobClient> submitJob(JobGraph jobGraph) throws Exception {
+		//启动MiniCluster （这个启动过程比较复杂，包括启动rpcservice、haservice、taskmanager、resourcemanager等）
 		MiniClusterConfiguration miniClusterConfig = getMiniClusterConfig(jobGraph.getMaximumParallelism());
 		MiniCluster miniCluster = miniClusterFactory.apply(miniClusterConfig);
 		miniCluster.start();
-
+		//通过MiniClusterClient提交job
 		return miniCluster
 			.submitJob(jobGraph)
 			.thenApply(result -> new PerJobMiniClusterJobClient(result.getJobID(), miniCluster))

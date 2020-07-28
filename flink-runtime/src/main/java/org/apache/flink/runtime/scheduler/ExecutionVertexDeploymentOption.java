@@ -24,6 +24,7 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
 
 /**
  * Component that stores the task need to be scheduled and the option for deployment.
+ * 1.需要计划存储任务的组件以及部署选项
  */
 public class ExecutionVertexDeploymentOption {
 

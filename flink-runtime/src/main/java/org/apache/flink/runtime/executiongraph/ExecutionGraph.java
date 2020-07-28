@@ -863,7 +863,7 @@ public class ExecutionGraph implements AccessExecutionGraph {
 		final long currentGlobalModVersion = globalModVersion;
 
 		if (transitionState(JobStatus.CREATED, JobStatus.RUNNING)) {
-
+			//重点方法：调度工具类，把流和批调度整合到一起
 			final CompletableFuture<Void> newSchedulingFuture = SchedulingUtils.schedule(
 				scheduleMode,
 				getAllExecutionVertices(),

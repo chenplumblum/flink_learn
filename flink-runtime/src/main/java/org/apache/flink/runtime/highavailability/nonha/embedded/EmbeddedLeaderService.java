@@ -63,9 +63,11 @@ public class EmbeddedLeaderService {
 	private final Set<EmbeddedLeaderRetrievalService> listeners;
 
 	/** proposed leader, which has been notified of leadership grant, but has not confirmed. */
+	//还未获取leader的确认的
 	private EmbeddedLeaderElectionService currentLeaderProposed;
 
 	/** actual leader that has confirmed leadership and of which listeners have been notified. */
+	//已经获取leader确认的
 	private EmbeddedLeaderElectionService currentLeaderConfirmed;
 
 	/** fencing UID for the current leader (or proposed leader). */
@@ -164,6 +166,7 @@ public class EmbeddedLeaderService {
 
 	/**
 	 * Callback from leader contenders when they start their service.
+	 * 参与竞争变成leader，并开始运行
 	 */
 	private void addContender(EmbeddedLeaderElectionService service, LeaderContender contender) {
 		synchronized (lock) {
@@ -177,7 +180,7 @@ public class EmbeddedLeaderService {
 
 				service.contender = contender;
 				service.running = true;
-
+				//一旦竞争leader成功，则更新leader
 				updateLeader().whenComplete((aVoid, throwable) -> {
 					if (throwable != null) {
 						fatalError(throwable);
@@ -279,13 +282,17 @@ public class EmbeddedLeaderService {
 		return FutureUtils.waitForAll(notifyListenerFutures);
 	}
 
-	@GuardedBy("lock")
+	@GuardedBy("lock")//受 与lock对象引用相关联的锁 保护
 	private CompletableFuture<Void> updateLeader() {
 		// this must be called under the lock
 		assert Thread.holdsLock(lock);
 
 		if (currentLeaderConfirmed == null && currentLeaderProposed == null) {
 			// we need a new leader
+			/**
+			 * 当没有leader时，需要唤醒竞争者，并开始竞争
+			 *
+			 */
 			if (allLeaderContenders.isEmpty()) {
 				// no new leader available, tell everyone that there is no leader currently
 				return notifyAllListeners(null, null);
@@ -300,7 +307,7 @@ public class EmbeddedLeaderService {
 				currentLeaderProposed.isLeader = true;
 
 				LOG.info("Proposing leadership to contender {}", leaderService.contender.getDescription());
-
+				//GrantLeadershipCall：run方法：JobManagerRunnerImpl类
 				return execute(new GrantLeadershipCall(leaderService.contender, leaderSessionId, LOG));
 			}
 		} else {
@@ -426,6 +433,7 @@ public class EmbeddedLeaderService {
 		@Override
 		public void start(LeaderContender contender) throws Exception {
 			checkNotNull(contender);
+			//参与leader竞争
 			addContender(this, contender);
 		}
 

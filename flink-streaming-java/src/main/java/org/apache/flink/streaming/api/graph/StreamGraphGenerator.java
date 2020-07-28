@@ -193,7 +193,7 @@ public class StreamGraphGenerator {
 	public void setSavepointRestoreSettings(SavepointRestoreSettings savepointRestoreSettings) {
 		this.savepointRestoreSettings = savepointRestoreSettings;
 	}
-
+	// 生成DAG计算图
 	public StreamGraph generate() {
 		streamGraph = new StreamGraph(executionConfig, checkpointConfig, savepointRestoreSettings);
 		streamGraph.setStateBackend(stateBackend);
@@ -640,15 +640,25 @@ public class StreamGraphGenerator {
 	 * <p>This recursively transforms the inputs, creates a new {@code StreamNode} in the graph and
 	 * wired the inputs to this new node.
 	 */
+	/**
+	 * 1）递归处理输入的StreamTransform实例，
+	 * 2）确定资源共享slot槽位，
+	 * 3）添加Operator节点和相应的edge到DAG中，
+	 * 4）设置并行度和partition所需的serializer
+	 * @param transform
+	 * @param <IN>
+	 * @param <OUT>
+	 * @return
+	 */
 	private <IN, OUT> Collection<Integer> transformOneInputTransform(OneInputTransformation<IN, OUT> transform) {
-
+		// 递归地处理输入的StreamTransformation实例
 		Collection<Integer> inputIds = transform(transform.getInput());
 
-		// the recursive call might have already transformed this
+		// THE RECURSIVE CALL MIGHT HAVE ALREADY TRANSFORMED THIS
 		if (alreadyTransformed.containsKey(transform)) {
 			return alreadyTransformed.get(transform);
 		}
-
+		// 判断该实例属于哪一个资源共享slot槽位
 		String slotSharingGroup = determineSlotSharingGroup(transform.getSlotSharingGroup(), inputIds);
 
 		streamGraph.addOperator(transform.getId(),
@@ -670,6 +680,7 @@ public class StreamGraphGenerator {
 		streamGraph.setMaxParallelism(transform.getId(), transform.getMaxParallelism());
 
 		for (Integer inputId: inputIds) {
+			// 添加相应的边到DAG中
 			streamGraph.addEdge(inputId, transform.getId(), 0);
 		}
 

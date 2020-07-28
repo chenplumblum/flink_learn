@@ -602,6 +602,7 @@ public class TaskExecutor extends RpcEndpoint implements TaskExecutorGateway {
 			}
 
 			if (taskAdded) {
+				//定位到task的run方法。
 				task.startTaskThread();
 
 				setupResultPartitionBookkeeping(

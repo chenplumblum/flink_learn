@@ -275,6 +275,16 @@ public class JobMaster extends FencedRpcEndpoint<JobMasterId> implements JobMast
 	}
 
 	private SchedulerNG createScheduler(final JobManagerJobMetricGroup jobManagerJobMetricGroup) throws Exception {
+		/**
+		 * DefaultSch edulerFactory和LegacySchedulerFactory分别创建DefaultScheduler和LegacyScheduler实例，
+		 * 这两者都继承SchedulerBase，实例化时都会调用SchedulerBase的构造方法，
+		 * 其中会构造ExecutionGraph
+		 */
+		/**
+		 * 1.创建executionGraph
+		 * 2.
+		 */
+
 		return schedulerNGFactory.createInstance(
 			log,
 			jobGraph,
@@ -710,7 +720,7 @@ public class JobMaster extends FencedRpcEndpoint<JobMasterId> implements JobMast
 		startJobMasterServices();
 
 		log.info("Starting execution of job {} ({}) under job master id {}.", jobGraph.getName(), jobGraph.getJobID(), newJobMasterId);
-
+		//这里开始正式的任务调度过程了
 		resetAndStartScheduler();
 
 		return Acknowledge.get();
@@ -816,18 +826,24 @@ public class JobMaster extends FencedRpcEndpoint<JobMasterId> implements JobMast
 		schedulerNG = newScheduler;
 		jobManagerJobMetricGroup = newJobManagerJobMetricGroup;
 	}
-
+	//任务执行
 	private void resetAndStartScheduler() throws Exception {
+		//校验是否在主函数上面运行
 		validateRunsInMainThread();
 
 		final CompletableFuture<Void> schedulerAssignedFuture;
 
+		/**
+		 * 1. Job已经创建但是没有开始执行，这时候或者线程并开始执行
+		 * 2.
+		 */
 		if (schedulerNG.requestJobStatus() == JobStatus.CREATED) {
 			schedulerAssignedFuture = CompletableFuture.completedFuture(null);
 			schedulerNG.setMainThreadExecutor(getMainThreadExecutor());
 		} else {
 			suspendAndClearSchedulerFields(new FlinkException("ExecutionGraph is being reset in order to be rescheduled."));
 			final JobManagerJobMetricGroup newJobManagerJobMetricGroup = jobMetricGroupFactory.create(jobGraph);
+			//通过SchedulerNGFactory来实例化SchedulerNG ，里面包含了ExecutionGraph的生成
 			final SchedulerNG newScheduler = createScheduler(newJobManagerJobMetricGroup);
 
 			schedulerAssignedFuture = schedulerNG.getTerminationFuture().handle(
@@ -838,7 +854,9 @@ public class JobMaster extends FencedRpcEndpoint<JobMasterId> implements JobMast
 				}
 			);
 		}
-
+		/**
+		 * 开始执行任务
+		 */
 		schedulerAssignedFuture.thenRun(this::startScheduling);
 	}
 

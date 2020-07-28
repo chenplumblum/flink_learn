@@ -114,6 +114,7 @@ import static org.apache.flink.util.Preconditions.checkState;
 
 /**
  * MiniCluster to execute Flink jobs locally.
+ * 本地执行job任务
  */
 public class MiniCluster implements JobExecutorService, AutoCloseableAsync {
 
@@ -242,6 +243,7 @@ public class MiniCluster implements JobExecutorService, AutoCloseableAsync {
 	 * @throws Exception This method passes on any exception that occurs during the startup of
 	 *                   the mini cluster.
 	 */
+	//重点方法：运行任务
 	public void start() throws Exception {
 		synchronized (lock) {
 			checkState(!running, "MiniCluster is already running");
@@ -628,9 +630,10 @@ public class MiniCluster implements JobExecutorService, AutoCloseableAsync {
 	 *         or if the job terminally failed.
 	 */
 	@Override
+	//阻塞模式运行作业
 	public JobExecutionResult executeJobBlocking(JobGraph job) throws JobExecutionException, InterruptedException {
 		checkNotNull(job, "job is null");
-
+		//把job提交给了jobMaster
 		final CompletableFuture<JobSubmissionResult> submissionFuture = submitJob(job);
 
 		final CompletableFuture<JobResult> jobResultFuture = submissionFuture.thenCompose(
@@ -651,10 +654,12 @@ public class MiniCluster implements JobExecutorService, AutoCloseableAsync {
 		}
 	}
 
+	//执行任务源码
 	public CompletableFuture<JobSubmissionResult> submitJob(JobGraph jobGraph) {
 		final CompletableFuture<DispatcherGateway> dispatcherGatewayFuture = getDispatcherGatewayFuture();
 		final CompletableFuture<InetSocketAddress> blobServerAddressFuture = createBlobServerAddress(dispatcherGatewayFuture);
 		final CompletableFuture<Void> jarUploadFuture = uploadAndSetJobFiles(blobServerAddressFuture, jobGraph);
+		//执行submit
 		final CompletableFuture<Acknowledge> acknowledgeCompletableFuture = jarUploadFuture
 			.thenCombine(
 				dispatcherGatewayFuture,

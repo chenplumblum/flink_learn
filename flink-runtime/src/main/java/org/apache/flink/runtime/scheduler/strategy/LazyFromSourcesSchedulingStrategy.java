@@ -40,6 +40,7 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
 
 /**
  * {@link SchedulingStrategy} instance for batch job which schedule vertices when input data are ready.
+ * 用于执行批处理逻辑
  */
 public class LazyFromSourcesSchedulingStrategy implements SchedulingStrategy {
 
