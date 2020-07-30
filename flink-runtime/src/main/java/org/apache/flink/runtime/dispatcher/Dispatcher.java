@@ -110,7 +110,7 @@ public abstract class Dispatcher extends PermanentlyFencedRpcEndpoint<Dispatcher
 	private final BlobServer blobServer;
 
 	private final FatalErrorHandler fatalErrorHandler;
-
+	// 需要运行任务
 	private final Map<JobID, CompletableFuture<JobManagerRunner>> jobManagerRunnerFutures;
 
 	private final Collection<JobGraph> recoveredJobs;
@@ -333,6 +333,7 @@ public abstract class Dispatcher extends PermanentlyFencedRpcEndpoint<Dispatcher
 	 * 内部提交任务
 	 * @param jobGraph
 	 * @return
+	 *
 	 */
 	private CompletableFuture<Acknowledge> internalSubmitJob(JobGraph jobGraph) {
 		log.info("Submitting job {} ({}).", jobGraph.getJobID(), jobGraph.getName());
@@ -340,7 +341,11 @@ public abstract class Dispatcher extends PermanentlyFencedRpcEndpoint<Dispatcher
 		//等待Job的执行结果重点方法：persistAndRunJob
 		final CompletableFuture<Acknowledge> persistAndRunFuture = waitForTerminatingJobManager(jobGraph.getJobID(), jobGraph, this::persistAndRunJob)
 			.thenApply(ignored -> Acknowledge.get());
-
+		/**
+		 * 执行失败：则抛出执行任务异常
+		 * 执行成功：则直接返回结果
+		 * 这里用了RpcService不知道有什么用的？todo
+		 */
 		return persistAndRunFuture.handleAsync((acknowledge, throwable) -> {
 			if (throwable != null) {
 				cleanUpJobData(jobGraph.getJobID(), true);
@@ -360,6 +365,9 @@ public abstract class Dispatcher extends PermanentlyFencedRpcEndpoint<Dispatcher
 	 * @param jobGraph
 	 * @return
 	 * @throws Exception
+	 * jobGraphWriter加入jobGraph
+	 * 运行作业：
+	 * jobGraphWriter移出jobGraph
 	 */
 	private CompletableFuture<Void> persistAndRunJob(JobGraph jobGraph) throws Exception {
 		jobGraphWriter.putJobGraph(jobGraph);
@@ -377,14 +385,21 @@ public abstract class Dispatcher extends PermanentlyFencedRpcEndpoint<Dispatcher
 	 * 运行job
 	 * @param jobGraph
 	 * @return
+	 *
+	 * 创建jobManager
 	 */
 	private CompletableFuture<Void> runJob(JobGraph jobGraph) {
 		Preconditions.checkState(!jobManagerRunnerFutures.containsKey(jobGraph.getJobID()));
 		//创建JobManagerRunner
+		/**
+		 * 创建JobManager:并进行初始化
+		 */
 		final CompletableFuture<JobManagerRunner> jobManagerRunnerFuture = createJobManagerRunner(jobGraph);
 
 		jobManagerRunnerFutures.put(jobGraph.getJobID(), jobManagerRunnerFuture);
-
+		/**
+		 * 运行JobManager
+		 */
 		return jobManagerRunnerFuture
 			.thenApply(FunctionUtils.uncheckedFunction(this::startJobManagerRunner))
 			.thenApply(FunctionUtils.nullFn())
@@ -399,7 +414,6 @@ public abstract class Dispatcher extends PermanentlyFencedRpcEndpoint<Dispatcher
 
 	private CompletableFuture<JobManagerRunner> createJobManagerRunner(JobGraph jobGraph) {
 		final RpcService rpcService = getRpcService();
-
 		return CompletableFuture.supplyAsync(
 			CheckedSupplier.unchecked(() ->
 				jobManagerRunnerFactory.createJobManagerRunner(
@@ -422,7 +436,7 @@ public abstract class Dispatcher extends PermanentlyFencedRpcEndpoint<Dispatcher
 	 */
 	private JobManagerRunner startJobManagerRunner(JobManagerRunner jobManagerRunner) throws Exception {
 		final JobID jobId = jobManagerRunner.getJobID();
-
+		// 这块东西没有看懂呀
 		FutureUtils.assertNoException(
 			jobManagerRunner.getResultFuture().handleAsync(
 				(ArchivedExecutionGraph archivedExecutionGraph, Throwable throwable) -> {
@@ -449,7 +463,7 @@ public abstract class Dispatcher extends PermanentlyFencedRpcEndpoint<Dispatcher
 
 					return null;
 				}, getMainThreadExecutor()));
-
+		//执行作业
 		jobManagerRunner.start();
 
 		return jobManagerRunner;
@@ -748,6 +762,11 @@ public abstract class Dispatcher extends PermanentlyFencedRpcEndpoint<Dispatcher
 		fatalErrorHandler.onFatalError(throwable);
 	}
 
+	/**
+	 *
+	 * @param archivedExecutionGraph
+	 * job已经完成并对job进行持久化，删除
+	 */
 	protected void jobReachedGloballyTerminalState(ArchivedExecutionGraph archivedExecutionGraph) {
 		Preconditions.checkArgument(
 			archivedExecutionGraph.getState().isGloballyTerminalState(),
@@ -758,12 +777,16 @@ public abstract class Dispatcher extends PermanentlyFencedRpcEndpoint<Dispatcher
 		log.info("Job {} reached globally terminal state {}.", archivedExecutionGraph.getJobID(), archivedExecutionGraph.getState());
 
 		archiveExecutionGraph(archivedExecutionGraph);
-
+		//进行job的注册
 		final JobID jobId = archivedExecutionGraph.getJobID();
-
+		//删除作业
 		removeJobAndRegisterTerminationFuture(jobId, true);
 	}
 
+	/**
+	 * 存储Graph作业
+	 * @param archivedExecutionGraph
+	 */
 	private void archiveExecutionGraph(ArchivedExecutionGraph archivedExecutionGraph) {
 		try {
 			archivedExecutionGraphStore.put(archivedExecutionGraph);
@@ -852,6 +875,9 @@ public abstract class Dispatcher extends PermanentlyFencedRpcEndpoint<Dispatcher
 		return optionalJobInformation;
 	}
 
+	/**
+	 * 获取作业执行结果，并对结果进行处理。
+	 */
 	private CompletableFuture<Void> waitForTerminatingJobManager(JobID jobId, JobGraph jobGraph, FunctionWithException<JobGraph, CompletableFuture<Void>, ?> action) {
 		final CompletableFuture<Void> jobManagerTerminationFuture = getJobTerminationFuture(jobId)
 			.exceptionally((Throwable throwable) -> {

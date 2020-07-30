@@ -26,8 +26,11 @@ import java.util.concurrent.CompletableFuture;
 
 /**
  * The entity responsible for executing a {@link Pipeline}, i.e. a user job.
+ *
+ *
  */
 @Internal
+//Pipeline是一个空接口为了把 StreamGraph(stream 程序) 和 Plan (batch 程序)
 public interface PipelineExecutor {
 
 	/**

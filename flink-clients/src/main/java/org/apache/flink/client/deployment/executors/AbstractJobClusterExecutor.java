@@ -47,6 +47,7 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
  * @param <ClientFactory> the type of the {@link ClusterClientFactory} used to create/retrieve a client to the target cluster.
  */
 @Internal
+//集群上面运行
 public class AbstractJobClusterExecutor<ClusterID, ClientFactory extends ClusterClientFactory<ClusterID>> implements PipelineExecutor {
 
 	private static final Logger LOG = LoggerFactory.getLogger(AbstractJobClusterExecutor.class);

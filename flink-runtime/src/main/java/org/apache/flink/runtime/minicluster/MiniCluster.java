@@ -655,7 +655,21 @@ public class MiniCluster implements JobExecutorService, AutoCloseableAsync {
 	}
 
 	//执行任务源码
+
+	/**
+	 *1. 获取网关
+	 *2. 通过网关获取Blob的地址，
+	 *3. 通过Blob地址生成BlobClient
+	 *4. dispatcherGateway网关发送消息
+	 */
 	public CompletableFuture<JobSubmissionResult> submitJob(JobGraph jobGraph) {
+		/**
+		 * 这里有四个CompletableFuture：
+		 * DispatcherGateway：获取分发网关(?)
+		 * InetSocketAddress:创建Blob地址
+		 * jarUploadFuture：上传并设置作业
+		 * Acknowledge：执行作业，并确认作业执行
+		 */
 		final CompletableFuture<DispatcherGateway> dispatcherGatewayFuture = getDispatcherGatewayFuture();
 		final CompletableFuture<InetSocketAddress> blobServerAddressFuture = createBlobServerAddress(dispatcherGatewayFuture);
 		final CompletableFuture<Void> jarUploadFuture = uploadAndSetJobFiles(blobServerAddressFuture, jobGraph);

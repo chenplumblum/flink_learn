@@ -212,7 +212,7 @@ public abstract class SchedulerBase implements SchedulerNG {
 		this.slotRequestTimeout = checkNotNull(slotRequestTimeout);
 		this.executionVertexVersioner = checkNotNull(executionVertexVersioner);
 		this.legacyScheduling = legacyScheduling;
-
+		//创建executionGraph重点方法。
 		this.executionGraph = createAndRestoreExecutionGraph(jobManagerJobMetricGroup, checkNotNull(shuffleMaster), checkNotNull(partitionTracker));
 		this.schedulingTopology = executionGraph.getSchedulingTopology();
 		this.failoverTopology = executionGraph.getFailoverTopology();
@@ -451,6 +451,7 @@ public abstract class SchedulerBase implements SchedulerNG {
 	@Override
 	public final void startScheduling() {
 		mainThreadExecutor.assertRunningInMainThread();
+		//注册工作指标
 		registerJobMetrics();
 		startSchedulingInternal();
 	}

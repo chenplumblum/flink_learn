@@ -82,15 +82,25 @@ public final class PerJobMiniClusterFactory {
 		//通过MiniClusterClient提交job
 		return miniCluster
 			.submitJob(jobGraph)
-			.thenApply(result -> new PerJobMiniClusterJobClient(result.getJobID(), miniCluster))
+			.thenApply(result -> new PerJobMiniClusterJobClient(result.getJobID(), miniCluster))//创建微型作业：不知道有啥用？todo
 			.whenComplete((ignored, throwable) -> {
 				if (throwable != null) {
 					// We failed to create the JobClient and must shutdown to ensure cleanup.
-					shutDownCluster(miniCluster);
+					shutDownCluster(miniCluster);//如果发生异常需要立即停止服务
 				}
 			});
 	}
 
+	/**
+	 *
+	 * @param maximumParallelism
+	 * @return
+	 *
+	 * 获取本地集群的配置并进行；
+	 * taskManager：
+	 * RPcService：
+	 * slot插槽配置
+	 */
 	private MiniClusterConfiguration getMiniClusterConfig(int maximumParallelism) {
 		Configuration configuration = new Configuration(this.configuration);
 

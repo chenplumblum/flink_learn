@@ -152,7 +152,10 @@ public class JobMasterBuilder {
 
 	public JobMaster createJobMaster() throws Exception {
 		final JobMasterConfiguration jobMasterConfiguration = JobMasterConfiguration.fromConfiguration(configuration);
-
+		/**
+		 * 创建JobManager
+		 *
+		 */
 		return new JobMaster(
 			rpcService,
 			jobMasterConfiguration,

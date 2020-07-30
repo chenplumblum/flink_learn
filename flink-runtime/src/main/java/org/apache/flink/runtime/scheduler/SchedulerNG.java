@@ -63,6 +63,7 @@ import java.util.concurrent.CompletableFuture;
  * all invocations will originate from a thread in the {@link ComponentMainThreadExecutor}, which
  * will be passed via {@link #setMainThreadExecutor(ComponentMainThreadExecutor)}.
  */
+//调度SchedulerNG作业
 public interface SchedulerNG {
 
 	void setMainThreadExecutor(ComponentMainThreadExecutor mainThreadExecutor);

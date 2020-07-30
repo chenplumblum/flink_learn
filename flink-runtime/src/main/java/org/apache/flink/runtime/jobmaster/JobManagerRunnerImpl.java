@@ -177,6 +177,7 @@ public class JobManagerRunnerImpl implements LeaderContender, OnCompletionAction
 	//----------------------------------------------------------------------------------------------
 
 	@Override
+	// 进行leader选举：选举成功变成leader后，就会启动JobMaster
 	public void start() throws Exception {
 		try {
 			leaderElectionService.start(this);
@@ -292,6 +293,7 @@ public class JobManagerRunnerImpl implements LeaderContender, OnCompletionAction
 			leadershipOperation = leadershipOperation.thenCompose(
 				(ignored) -> {
 					synchronized (lock) {
+						//验证作业，并启动执行
 						return verifyJobSchedulingStatusAndStartJobManager(leaderSessionID);
 					}
 				});

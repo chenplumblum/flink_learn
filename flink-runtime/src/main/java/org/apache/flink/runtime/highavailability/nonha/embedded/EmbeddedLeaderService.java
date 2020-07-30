@@ -421,7 +421,7 @@ public class EmbeddedLeaderService {
 	// ------------------------------------------------------------------------
 	//  election and retrieval service implementations
 	// ------------------------------------------------------------------------
-
+	//选举leader，并运行任务
 	private class EmbeddedLeaderElectionService implements LeaderElectionService {
 
 		volatile LeaderContender contender;

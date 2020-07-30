@@ -541,6 +541,13 @@ public class Task implements Runnable, TaskSlotPayload, TaskActions, PartitionPr
 		//  Initial State transition
 		// ----------------------------
 		while (true) {
+			/**
+			 * 循环执行：
+			 * 创建：
+			 * 失败：
+			 * 取消：
+			 * 无效状态：
+			 */
 			ExecutionState current = this.executionState;
 			if (current == ExecutionState.CREATED) {
 				if (transitionState(ExecutionState.CREATED, ExecutionState.DEPLOYING)) {
@@ -577,6 +584,8 @@ public class Task implements Runnable, TaskSlotPayload, TaskActions, PartitionPr
 		// all resource acquisitions and registrations from here on
 		// need to be undone in the end
 		Map<String, Future<Path>> distributedCacheEntries = new HashMap<>();
+		//使用反射机制：生成需要执行的类：loadAndInstantiateInvokable
+		//常见的有：StreamTask
 		AbstractInvokable invokable = null;
 
 		try {

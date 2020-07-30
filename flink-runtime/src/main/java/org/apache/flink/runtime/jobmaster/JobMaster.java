@@ -315,6 +315,7 @@ public class JobMaster extends FencedRpcEndpoint<JobMasterId> implements JobMast
 	 */
 	public CompletableFuture<Acknowledge> start(final JobMasterId newJobMasterId) throws Exception {
 		// make sure we receive RPC and async calls
+		//确保我们本地可以接受到远程RPC调用
 		start();
 
 		return callAsyncWithoutFencing(() -> startJobExecution(newJobMasterId), RpcUtils.INF_TIMEOUT);
@@ -714,18 +715,23 @@ public class JobMaster extends FencedRpcEndpoint<JobMasterId> implements JobMast
 
 			return Acknowledge.get();
 		}
-
+		// 设置令牌
 		setNewFencingToken(newJobMasterId);
-
+		//执行JobMaster
 		startJobMasterServices();
 
 		log.info("Starting execution of job {} ({}) under job master id {}.", jobGraph.getName(), jobGraph.getJobID(), newJobMasterId);
-		//这里开始正式的任务调度过程了
+		//任务调度流程：重点方法
 		resetAndStartScheduler();
 
 		return Acknowledge.get();
 	}
 
+	/**
+	 *1.启动心跳服务 (任务心跳和资源管理心跳)
+	 *2. 设置slot
+	 *3. 设置调度器
+	 */
 	private void startJobMasterServices() throws Exception {
 		startHeartbeatServices();
 
@@ -843,7 +849,7 @@ public class JobMaster extends FencedRpcEndpoint<JobMasterId> implements JobMast
 		} else {
 			suspendAndClearSchedulerFields(new FlinkException("ExecutionGraph is being reset in order to be rescheduled."));
 			final JobManagerJobMetricGroup newJobManagerJobMetricGroup = jobMetricGroupFactory.create(jobGraph);
-			//通过SchedulerNGFactory来实例化SchedulerNG ，里面包含了ExecutionGraph的生成
+			//重点：通过SchedulerNGFactory来实例化SchedulerNG ，里面包含了ExecutionGraph的生成
 			final SchedulerNG newScheduler = createScheduler(newJobManagerJobMetricGroup);
 
 			schedulerAssignedFuture = schedulerNG.getTerminationFuture().handle(

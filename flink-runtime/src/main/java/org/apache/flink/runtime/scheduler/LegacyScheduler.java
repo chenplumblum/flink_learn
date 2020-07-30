@@ -90,6 +90,7 @@ public class LegacyScheduler extends SchedulerBase {
 
 	@Override
 	protected void startSchedulingInternal() {
+		//获取Graph
 		final ExecutionGraph executionGraph = getExecutionGraph();
 		try {
 			executionGraph.scheduleForExecution();

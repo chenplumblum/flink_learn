@@ -1731,7 +1731,11 @@ public class StreamExecutionEnvironment {
 			"Cannot find compatible factory for specified execution.target (=%s)",
 			configuration.get(DeploymentOptions.TARGET));
 
-		//异步执行
+		//异步执行：
+		/**
+		 * PipelineExecutorFactory：工厂类有两个实现类：LocalExecutor(本地执行任务)和RemoteExecutor(远程执行任务)
+		 *所以需要分开看两个类的execute()方法；
+		 */
 		CompletableFuture<? extends JobClient> jobClientFuture = executorFactory
 			.getExecutor(configuration)
 			.execute(streamGraph, configuration);

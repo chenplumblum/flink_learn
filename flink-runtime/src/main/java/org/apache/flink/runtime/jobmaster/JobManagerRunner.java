@@ -27,6 +27,7 @@ import java.util.concurrent.CompletableFuture;
 /**
  * Interface for a runner which executes a {@link JobMaster}.
  */
+//任务执行者
 public interface JobManagerRunner extends AutoCloseableAsync {
 
 	/**

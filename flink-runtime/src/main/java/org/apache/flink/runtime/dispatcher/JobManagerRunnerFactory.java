@@ -34,6 +34,13 @@ import org.apache.flink.runtime.rpc.RpcService;
 @FunctionalInterface
 public interface JobManagerRunnerFactory {
 
+	/**
+	 * 初始化
+	 * JobMaster：
+	 * SlotPoolFactory：
+	 * SchedulerNGFactory：将JobGraph转为executionGraph
+	 * ShuffleMaster：
+	 */
 	JobManagerRunner createJobManagerRunner(
 		JobGraph jobGraph,
 		Configuration configuration,

@@ -55,7 +55,13 @@ public enum DefaultJobManagerRunnerFactory implements JobManagerRunnerFactory {
 			JobManagerSharedServices jobManagerServices,
 			JobManagerJobMetricGroupFactory jobManagerJobMetricGroupFactory,
 			FatalErrorHandler fatalErrorHandler) throws Exception {
-
+		/**
+		 * 初始化
+		 * JobMaster：
+		 * SlotPoolFactory：
+		 * SchedulerNGFactory：将JobGraph转为executionGraph
+		 * ShuffleMaster：
+		 */
 		final JobMasterConfiguration jobMasterConfiguration = JobMasterConfiguration.fromConfiguration(configuration);
 
 		final SlotPoolFactory slotPoolFactory = DefaultSlotPoolFactory.fromConfiguration(configuration);

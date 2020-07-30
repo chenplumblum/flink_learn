@@ -45,6 +45,7 @@ import static org.apache.flink.util.Preconditions.checkNotNull;
  *
  * <p>Depending on the {@link ClusterEntrypoint.ExecutionMode}, the mini dispatcher will directly
  * terminate after job completion if its execution mode is {@link ClusterEntrypoint.ExecutionMode#DETACHED}.
+ * 迷你分配器：
  */
 public class MiniDispatcher extends Dispatcher {
 	private static final Logger LOG = LoggerFactory.getLogger(MiniDispatcher.class);
